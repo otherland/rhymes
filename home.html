@@ -1,0 +1,192 @@
+<!doctype html>
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2018 by anonymous (http://jsbin.com/dimezivoci/1/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+<meta name="robots" content="noindex">
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width-device-width, initial-scale-1">
+	<script src="http://www.jimsproch.com/react/future/react.js"></script>
+	<script src="http://www.jimsproch.com/react/future/react-dom.js"></script>
+	<script src="http://www.jimsproch.com/react/babel-browser.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.16.2/axios.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+  <style type="text/css">
+    body {
+      font-family: 'Open Sans', sans-serif;
+      width: 5000px;
+    }
+    .column {
+      width: 150px;
+      float: left;
+    }
+    .column.lines {
+      width: 10%;
+    }
+    input {
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array
+}
+function lineShuffle(lines){
+  let j = 2
+  let new_arr = []
+  let temp_arr = []
+  for (var i = 0; i < lines.length; i++) {
+    if (j == lines[i][1]) {
+      temp_arr.push(lines[i])
+    }
+    else {
+      new_arr = new_arr.concat(shuffleArray(temp_arr))
+      j = lines[i][1]
+      temp_arr = []
+      temp_arr.push(lines[i])
+    }
+  }
+  return new_arr
+}
+    class TableExp extends React.Component {
+        constructor () {
+            super();
+
+            this.state = {
+            'ml': [], 
+            'rel_rhy': [], 
+            'rel_nry': [], 
+            'rel_jjb': [], 
+            'rel_jja': [], 
+            'lc': [], 
+            'rel_trg': [], 
+            'rel_cns': [], 
+            'rel_ant': [], 
+            'rel_spc': [], 
+            'lines': [], 
+            'query': ''
+            };
+        }
+
+        componentDidMount () {
+           
+        }
+
+handleInputChange = () => {
+    this.setState({
+      query: this.search.value
+    })
+  }
+    _handleRandom = () => {
+      let arr = this.state.lines;
+      shuffleArray(arr);
+      this.setState({ 'lines': arr});
+    }
+    _handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      const params = [
+      'ml', 
+      'rel_rhy', 
+      'rel_nry', 
+      'rel_jjb', 
+      'rel_jja', 
+      'lc', 
+      'rel_trg', 
+      'rel_cns', 
+      'rel_ant',
+      'rel_spc', 
+      ];
+      params.forEach((param) => { 
+            axios.get(`https://api.datamuse.com/words?${param}=${this.state.query}`, {
+            	responseType: 'json'
+            }).then(response => {
+                const words = response.data.map(row => row.word)
+                this.setState({ [param]: words });
+            });
+      });
+
+      axios.get(`https://stark-citadel-44367.herokuapp.com/rhyme/${this.state.query}`, {
+        responseType: 'json'
+      }).then(response => {
+          let lines = lineShuffle(response.data.lines);
+          let words = lines.map(row => `${row[0]} ${row[1]}`);
+          this.setState({ ['lines']: words });
+      });
+  }
+  }
+
+        render () {
+
+            return (<div>
+            <div><input
+          placeholder="Search for..."
+          ref={input => this.search = input}
+          onChange={this.handleInputChange}
+          onKeyPress={this._handleKeyPress}
+        /></div>
+         <div className='column lines'>
+            <h3>Lines</h3>
+            <button onClick={this._handleRandom}>Random</button>
+            {this.state.lines.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+        <div className='column'>
+            <h3>Meaning</h3>
+            {this.state.ml.map((word, i) => <div key={i}>{word}</div>)}
+        </div>
+        <div className='column'>
+           <h3>Trigger</h3>
+           {this.state.rel_trg.map((word, i) => <div key={i}>{word}</div>)}
+        </div>
+        <div className='column'>
+            <h3>Rhyme</h3>
+            {this.state.rel_rhy.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+        <div className='column'>
+            <h3>Near rhyme</h3>
+            {this.state.rel_nry.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+        <div className='column'>
+            <h3>Consonant</h3>
+            {this.state.rel_cns.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+        <div className='column'>
+            <h3>Opposite</h3>
+            {this.state.rel_ant.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+         <div className='column'>
+            <h3>Adjective</h3>
+            {this.state.rel_jjb.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+         <div className='column'>
+            <h3>Noun</h3>
+            {this.state.rel_jja.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+         <div className='column'>
+            <h3>Followed by</h3>
+            {this.state.lc.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+         <div className='column'>
+            <h3>Kind of</h3>
+            {this.state.rel_spc.map((word, i) => <div key={i}>{word}</div>)}
+         </div>
+  </div>);
+        }
+    };
+
+    ReactDOM.render(<div><TableExp/></div>, document.getElementById("root"));
+</script>
+</body>
+</html>
